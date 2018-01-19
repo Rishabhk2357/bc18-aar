@@ -31,6 +31,7 @@ my_team = gc.team()
 other_team=bc.Team.Blue
 if my_team==bc.Team.Blue:
     other_team=bc.Team.Red
+
 while True:
     # We only support Python 3, which means brackets around print()
     #print('pyround:', gc.round())
@@ -40,8 +41,11 @@ while True:
         # walk through our units:
         for unit in gc.my_units():
 
+            if location.is_in_space():
+                continue
+
             # first, factory logic
-            # factory code
+            ######################## factory code
             if unit.unit_type == bc.UnitType.Factory:
                 garrison = unit.structure_garrison()
                 if len(garrison) > 0:
@@ -54,17 +58,16 @@ while True:
                     gc.produce_robot(unit.id, bc.UnitType.Knight)
                     print('produced a knight!')
                     continue
+            ######################## end of factory code
+
             location = unit.location
-            if(location.is_in_space()==True):
-                continue
             my_planet=location.map_location().planet
+
+            ######################## rocket code
             if unit.unit_type==bc.UnitType.Rocket:
-                
                 #print(my_planet)
                 #Spots 0 and 1 in the array represent x and y coordinates of potential mars launch coordinates.
                 #team_array=gc.get_team_array(location.map_location().planet)
-                if(location.is_in_space()==True):
-                    continue
                 if(my_planet==bc.Planet.Mars):
                     d=random.choice(directions)
                     if gc.can_unload(unit.id,d):
@@ -84,7 +87,7 @@ while True:
                 x=rocketLocation[0]
                 y=rocketLocation[1]
                 if len(unit.structure_garrison())==8 or (
-                    len(gc.sense_nearby_units_by_team(location.map_location(),2,other_team))!=0 and 
+                    len(gc.sense_nearby_units_by_team(location.map_location(),2,other_team))!=0 and
                     len(unit.structure_garrison())>=1):
                     # print("Starting launch sequence")
                     while gc.starting_map(my_planet.other()).is_passable_terrain_at(bc.MapLocation(my_planet.other(),x,y))==False:
@@ -104,7 +107,7 @@ while True:
                         if(x%(gc.starting_map(my_planet.other()).width)==0):
                             x=0
                             y+=1
-                        
+
                         rocketLocation[0]=x
                         rocketLocation[1]=y
 
@@ -115,34 +118,29 @@ while True:
                         if(gc.can_load(unit.id,rob.id)):
                             gc.load(unit.id,rob.id)
                 continue
-                #Improvements: Selectively load units into the rocket. 
-                 
+                #Improvements: Selectively load units into the rocket.
+            ######################## end of rocket code
 
 
-            # first, let's look for nearby blueprints to work on
-            if(my_planet==bc.Planet.Mars and unit.unit_type==bc.UnitType.Worker):
-                    # Mining Code
-                    for d in directions:
-                        if gc.can_harvest(unit.id,d):
-                            gc.harvest(unit.id,d)
-                            print("Karbonite: {}".format(gc.karbonite()))
-                    direc=random.choice(directions)
-                    if gc.is_move_ready(unit.id) and gc.can_move(unit.id, direc):
-                        gc.move_robot(unit.id, direc)
-            if location.is_on_map() and not location.is_in_garrison():
-                nearby = gc.sense_nearby_units(location.map_location(), 2)
-                for other in nearby:
-                    if unit.unit_type == bc.UnitType.Worker and gc.can_build(unit.id, other.id):
-                        gc.build(unit.id, other.id)
-                        #print('built a factory!')
-                        # move onto the next unit
-                        continue
-                    
-                    if other.team != my_team and gc.is_attack_ready(unit.id) and gc.can_attack(unit.id, other.id):
-                        print('attacked a thing!')
-                        gc.attack(unit.id, other.id)
-                        continue
-
+            ######################## worker code
+            if(unit.unit_type==bc.UnitType.Worker):
+                if(my_planet==bc.Planet.Mars):
+                        # Mining Code
+                        for d in directions:
+                            if gc.can_harvest(unit.id,d):
+                                gc.harvest(unit.id,d)
+                                print("Karbonite: {}".format(gc.karbonite()))
+                        direc=random.choice(directions)
+                        if gc.is_move_ready(unit.id) and gc.can_move(unit.id, direc):
+                            gc.move_robot(unit.id, direc)
+                if location.is_on_map() and not location.is_in_garrison():
+                    nearby = gc.sense_nearby_units(location.map_location(), 2)
+                    for other in nearby:
+                        if unit.unit_type == bc.UnitType.Worker and gc.can_build(unit.id, other.id):
+                            gc.build(unit.id, other.id)
+                            #print('built a factory!')
+                            # move onto the next unit
+                            continue
 
                 # okay, there weren't any dudes around
                 # pick a random direction:
@@ -160,7 +158,17 @@ while True:
                     # and if that fails, try to move
                     elif gc.is_move_ready(unit.id) and gc.can_move(unit.id, d):
                         gc.move_robot(unit.id, d)
-            
+            ######################## worker code
+
+            ######################## knight code
+            if(unit.unit_type==bc.UnitType.Knight):
+                nearby = gc.sense_nearby_units_by_team(location.map_location(),30,other_team);
+                for other in nearby:
+                    if gc.is_attack_ready(unit.id) and gc.can_attack(unit.id, other.id):
+                        print('attacked a thing!')
+                        gc.attack(unit.id, other.id)
+                        continue
+            ######################## end of knight code
 
     except Exception as e:
         print('Error:', e)
