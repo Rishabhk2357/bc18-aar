@@ -7,7 +7,7 @@ import os
 print(os.getcwd())
 
 print("pystarting")
-
+#i am just testing if i can push
 # A GameController is the main type that you talk to the game with.
 # Its constructor will connect to a running game.
 gc = bc.GameController()
