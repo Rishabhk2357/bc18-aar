@@ -7,7 +7,7 @@ import os
 print(os.getcwd())
 
 print("pystarting")
-#i am just testing if i can push
+
 # A GameController is the main type that you talk to the game with.
 # Its constructor will connect to a running game.
 gc = bc.GameController()
@@ -41,9 +41,6 @@ while True:
         # walk through our units:
         for unit in gc.my_units():
 
-            if location.is_in_space():
-                continue
-
             # first, factory logic
             ######################## factory code
             if unit.unit_type == bc.UnitType.Factory:
@@ -51,7 +48,7 @@ while True:
                 if len(garrison) > 0:
                     d = random.choice(directions)
                     if gc.can_unload(unit.id, d):
-                        print('unloaded a {}}!'.format(garrison[-1].unit_type))
+                        #print('unloaded a {}}!'.format(garrison[-1].unit_type))
                         gc.unload(unit.id, d)
                         continue
                 elif gc.can_produce_robot(unit.id, bc.UnitType.Knight):
@@ -61,7 +58,12 @@ while True:
             ######################## end of factory code
 
             location = unit.location
+
+            if (location.is_in_space() or location.is_in_garrison()):
+                continue
+
             my_planet=location.map_location().planet
+
 
             ######################## rocket code
             if unit.unit_type==bc.UnitType.Rocket:
@@ -111,7 +113,8 @@ while True:
                         rocketLocation[0]=x
                         rocketLocation[1]=y
 
-                        continue;
+                        continue
+
                 nearby=gc.sense_nearby_units_by_team(location.map_location(),1,my_team)
                 if(len(nearby)!=0):
                     for rob in nearby:
@@ -158,10 +161,11 @@ while True:
                     # and if that fails, try to move
                     elif gc.is_move_ready(unit.id) and gc.can_move(unit.id, d):
                         gc.move_robot(unit.id, d)
-            ######################## worker code
+            ######################## end of worker code
 
             ######################## knight code
             if(unit.unit_type==bc.UnitType.Knight):
+                print("I AM A KNIGHT")
                 nearby = gc.sense_nearby_units_by_team(location.map_location(),30,other_team);
                 for other in nearby:
                     if gc.is_attack_ready(unit.id) and gc.can_attack(unit.id, other.id):
