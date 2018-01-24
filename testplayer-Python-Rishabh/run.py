@@ -11,7 +11,7 @@ rally_loc=None
 # A GameController is the main type that you talk to the game with.
 # Its constructor will connect to a running game.
 gc = bc.GameController()
-
+team_karbonite=0
 directions = list(bc.Direction)
 
 print("pystarted")
@@ -82,6 +82,16 @@ def rocket(unit, location, my_planet):
 
 def worker(unit, location, my_planet):
     if(my_planet==bc.Planet.Mars):
+
+            x=random.random()
+
+            if x>0.6 and team_karbonite>200:
+                
+                for d in directions:
+                    if gc.can_replicate(unit.id,d):
+                        gc.replicate(unit.id,d)
+                        team_karbonite-=30
+                        break
             for d in directions:
                 if gc.can_harvest(unit.id,d):
                     gc.harvest(unit.id,d)
@@ -99,7 +109,12 @@ def worker(unit, location, my_planet):
     # okay, there weren't any dudes around
     # pick a random direction:
     d = random.choice(directions)
+    x=random.random()
+    if x>0.99:
+        if gc.can_replicate(unit.id,d):
+            gc.replicate(unit.id,d)
     n=random.randint(0,1)
+
     # or, try to build a factory:
     if(n>0.5):
         if len(gc.sense_nearby_units_by_team(location.map_location(),30,other_team))==0 and gc.can_blueprint(unit.id,bc.UnitType.Rocket,d) and gc.karbonite()>bc.UnitType.Rocket.blueprint_cost():
@@ -164,6 +179,7 @@ def knight(unit, location, my_planet):
                     gc.move_robot(unit.id,d)
 
 def main():
+    team_karbonite=gc.karbonite()
     for unit in gc.my_units():
         if(unit.unit_type==bc.UnitType.Factory):
             factory(unit)
