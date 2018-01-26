@@ -81,6 +81,7 @@ def rocket(unit, location, my_planet):
     return
 
 def worker(unit, location, my_planet):
+    global team_karbonite
     if(my_planet==bc.Planet.Mars):
 
             x=random.random()
@@ -148,10 +149,10 @@ def knight(unit, location, my_planet):
             return
         else:
             tempDistance=location.map_location().distance_squared_to(other.location.map_location())
-            if tempDistance<minDistance or minDistance==0:
+            if tempDistance<minDistance or minDistance==0 and gc.can_move(unit.id,location.map_location().direction_to(minUnit.location.map_location())):
                 minDistance=tempDistance
                 minUnit=other
-    if(len(nearby)>0):
+    if(minUnit is not None):
         tempDir=location.map_location().direction_to(minUnit.location.map_location())
         if gc.is_move_ready(unit.id) and gc.can_move(unit.id,tempDir):
             gc.move_robot(unit.id,tempDir)
@@ -159,11 +160,12 @@ def knight(unit, location, my_planet):
         nearby_rockets=gc.sense_nearby_units_by_type(location.map_location(), 10, bc.UnitType.Rocket)
         minRocket=None
         minDistance=0
-        for rocket in nearby_rockets:
-            tempDist=location.map_location().distance_squared_to(rocket.location.map_location())
-            if rocket.team==my_team and (tempDist<minDistance or minDistance==0) and len(rocket.structure_garrison())<8 and not rocket.rocket_is_used():
-                minRocket=rocket
-                minDistance=tempDist
+        if my_planet=bc.Planet.Earth:
+            for rocket in nearby_rockets:
+                tempDist=location.map_location().distance_squared_to(rocket.location.map_location())
+                if rocket.team==my_team and (tempDist<minDistance or minDistance==0) and len(rocket.structure_garrison())<8 and not rocket.rocket_is_used():
+                    minRocket=rocket
+                    minDistance=tempDist
         if minRocket is not None:
             tempDir=location.map_location().direction_to(minRocket.location.map_location())
             if gc.is_move_ready(unit.id) and gc.can_move(unit.id,tempDir):
@@ -179,6 +181,7 @@ def knight(unit, location, my_planet):
                     gc.move_robot(unit.id,d)
 
 def main():
+    global team_karbonite
     team_karbonite=gc.karbonite()
     for unit in gc.my_units():
         if(unit.unit_type==bc.UnitType.Factory):
