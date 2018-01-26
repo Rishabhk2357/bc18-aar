@@ -108,9 +108,7 @@ def rocket(unit, location, my_planet):
 def worker(unit, location, my_planet):
     global team_karbonite
     if(my_planet==bc.Planet.Mars):
-
             x=random.random()
-
             if x>0.6 and team_karbonite>200:
                 for d in directions:
                     if gc.can_replicate(unit.id,d):
@@ -173,7 +171,8 @@ def knight(unit, location, my_planet):
             return
         else:
             tempDistance=location.map_location().distance_squared_to(other.location.map_location())
-            if tempDistance<minDistance or minDistance==0 and gc.can_move(unit.id,location.map_location().direction_to(minUnit.location.map_location())):
+            if tempDistance<minDistance or minDistance==0 and gc.can_move(unit.id,location.map_location().direction_to(other.location.map_location())):
+            #if ((tempDistance<minDistance or minDistance==0) and (minUnit is None or gc.can_move(unit.id,location.map_location().direction_to(minUnit.location.map_location()))):
                 minDistance=tempDistance
                 minUnit=other
     if(minUnit is not None):
@@ -204,6 +203,88 @@ def knight(unit, location, my_planet):
                 if gc.is_move_ready(unit.id) and gc.can_move(unit.id,d):
                     gc.move_robot(unit.id,d)
 
+def ranger(unit, location):
+    nearby = gc.sense_nearby_units_by_team(location.map_location(),unit.vision_range,other_team);
+    minDistance=0
+    minUnitDistance=None
+    minUnitAttack=None
+    minAttackQuotient=None
+    attacked=False
+    attack_possible=False
+    for other in nearby:
+        escaped=False
+    #We need to check which of robots in range has lowest health. Attack that one.
+    #We also need to move away from knights that are close.
+    #We should target rockets.
+        if (other.unit_type==bc.UnitType.Knight and location.map_location().distance_squared_to(other.location.map_location())<=1):
+            tempDirKnight=location.map_location().direction_to(other.location.map_location())
+            if gc.is_move_ready(unit.id) and gc.can_move(unit.id,tempDirKnight):
+                gc.move_robot(unit.id,tempDirKnight)
+        if gc.is_attack_ready(unit.id) and gc.can_attack(unit.id, other.id):
+            testQuot=(location.map_location().distance_squared_to(other.location.map_location())
+                /unit.vision_range) * (other.health/other.max_health)
+            if(minAttackQuotient is None or testQuot<minAttackQuotient):
+                minAttackQuotient=testQuot
+                minUnitAttack=other
+            attack_possible=True
+            # print('attacked a thing!')
+            # gc.attack(unit.id, other.id)
+            # attacked=True
+            # return
+        else:
+            if not attack_possible:
+                tempDistance=location.map_location().distance_squared_to(other.location.map_location())
+                if tempDistance<minDistance or minDistance==0:
+                    minDistance=tempDistance
+                    minUnitDistance=other
+    if minUnitAttack is not None:
+        gc.attack(unit.id,minUnitAttack.id)
+        attacked=True
+    elif minUnitDistance is not None:
+        tempDir=location.map_location().direction_to(minUnitDistance.location.map_location())
+        if gc.is_move_ready(unit.id) and gc.can_move(unit.id,tempDir):
+            gc.move_robot(unit.id,tempDir)
+
+"""
+def ranger(unit, location):
+    nearby = gc.sense_nearby_units_by_team(location.map_location(),unit.vision_range,other_team);
+    minDistance=0
+    minUnitDistance=None
+    minUnitAttack=None
+    minAttackQuotient=None
+    attacked=False
+    attack_possible=False
+    for other in nearby:
+        escaped=False
+    #We need to check which of robots in range has lowest health. Attack that one.
+    #We also need to move away from knights that are close.
+    #We should target rockets.
+        if gc.is_attack_ready(unit.id) and gc.can_attack(unit.id, other.id):
+            testQuot=(location.map_location().distance_squared_to(other.location.map_location())
+                /unit.vision_range) * (other.health/other.max_health)
+            if(minAttackQuotient is None or testQuot<minAttackQuotient):
+                minAttackQuotient=testQuot
+                minUnitAttack=other
+            attack_possible=True
+            # print('attacked a thing!')
+            # gc.attack(unit.id, other.id)
+            # attacked=True
+            # return
+        else:
+            if not attack_possible:
+                tempDistance=location.map_location().distance_squared_to(other.location.map_location())
+                if tempDistance<minDistance or minDistance==0:
+                    minDistance=tempDistance
+                    minUnitDistance=other
+    if minUnitAttack is not None:
+        gc.attack(unit.id,minUnit.id)
+        attacked=True
+    elif minUnitDistance is not None:
+        tempDir=location.map_location().direction_to(minUnit.location.map_location())
+        if gc.is_move_ready(unit.id) and gc.can_move(unit.id,tempDir):
+            gc.move_robot(unit.id,tempDir)
+"""
+
 def things_that_need_to_be_done_each_turn():
     global team_karbonite
     team_karbonite = gc.karbonite()
@@ -229,6 +310,9 @@ def main():
 
         elif(unit.unit_type==bc.UnitType.Knight):
             knight(unit, location, my_planet)
+
+        elif(unit.unit_type==bc.UnitType.Ranger):
+            ranger(unit, location)
 
 while True:
     # We only support Python 3, which means brackets around print()
