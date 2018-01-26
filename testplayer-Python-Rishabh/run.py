@@ -12,6 +12,7 @@ rally_loc=None
 # Its constructor will connect to a running game.
 gc = bc.GameController()
 team_karbonite=0
+
 directions = list(bc.Direction)
 
 print("pystarted")
@@ -23,9 +24,14 @@ random.seed(6137)
 rocketLocation=[0,0]
 # let's start off with some research!
 # we can queue as much as we want.
-gc.queue_research(bc.UnitType.Rocket)
-gc.queue_research(bc.UnitType.Worker)
+
+gc.queue_research(bc.UnitType.Rocket)#100
 gc.queue_research(bc.UnitType.Knight)
+gc.queue_research(bc.UnitType.Knight)#200
+gc.queue_research(bc.UnitType.Ranger)
+gc.queue_research(bc.UnitType.Ranger)#325
+gc.queue_research(bc.UnitType.Mage)#350
+gc.queue_research(bc.UnitType.Worker)#375
 
 my_team = gc.team()
 other_team=bc.Team.Blue
@@ -40,9 +46,28 @@ def factory(unit):
             #print('unloaded a {}}!'.format(garrison[-1].unit_type))
             gc.unload(unit.id, d)
             return
-    elif gc.can_produce_robot(unit.id, bc.UnitType.Knight):
-        gc.produce_robot(unit.id, bc.UnitType.Knight)
-        print('produced a knight!')
+    else:
+        x = random.random()
+        if x<0.3:
+            if gc.can_produce_robot(unit.id, bc.UnitType.Knight):
+                gc.produce_robot(unit.id, bc.UnitType.Knight)
+                print('produced a Knight!')
+        elif x<0.6:
+            if gc.can_produce_robot(unit.id, bc.UnitType.Ranger):
+                gc.produce_robot(unit.id, bc.UnitType.Ranger)
+                print('produced a Ranger!')
+        elif x<0.8:
+            if gc.can_produce_robot(unit.id, bc.UnitType.Worker):
+                gc.produce_robot(unit.id, bc.UnitType.Worker)
+                print('produced a Worker!')
+        elif x<0.9:
+            if gc.can_produce_robot(unit.id, bc.UnitType.Mage):
+                gc.produce_robot(unit.id, bc.UnitType.Mage)
+                print('produced a Mage!')
+        elif x<1:
+            if gc.can_produce_robot(unit.id, bc.UnitType.Healer):
+                gc.produce_robot(unit.id, bc.UnitType.Healer)
+                print('produced a Healer!')
         return
 
 def rocket(unit, location, my_planet):
@@ -56,7 +81,7 @@ def rocket(unit, location, my_planet):
         return
     x=rocketLocation[0]
     y=rocketLocation[1]
-    if len(unit.structure_garrison())==8 or (
+    if len(unit.structure_garrison())==unit.structure_max_capacity() or (
         len(gc.sense_nearby_units_by_team(location.map_location(),2,other_team))!=0 and
         len(unit.structure_garrison())>=1):
         while gc.starting_map(my_planet.other()).is_passable_terrain_at(bc.MapLocation(my_planet.other(),x,y))==False:
@@ -87,7 +112,6 @@ def worker(unit, location, my_planet):
             x=random.random()
 
             if x>0.6 and team_karbonite>200:
-                
                 for d in directions:
                     if gc.can_replicate(unit.id,d):
                         gc.replicate(unit.id,d)
@@ -135,7 +159,7 @@ def worker(unit, location, my_planet):
                     print('attacked a thing!')
                     gc.attack(unit.id, other.id)
                     return
-        ######################## end of knight code
+
 def knight(unit, location, my_planet):
     nearby = gc.sense_nearby_units_by_team(location.map_location(),30,other_team);
     minDistance=0
@@ -160,7 +184,7 @@ def knight(unit, location, my_planet):
         nearby_rockets=gc.sense_nearby_units_by_type(location.map_location(), 10, bc.UnitType.Rocket)
         minRocket=None
         minDistance=0
-        if my_planet=bc.Planet.Earth:
+        if my_planet==bc.Planet.Earth:
             for rocket in nearby_rockets:
                 tempDist=location.map_location().distance_squared_to(rocket.location.map_location())
                 if rocket.team==my_team and (tempDist<minDistance or minDistance==0) and len(rocket.structure_garrison())<8 and not rocket.rocket_is_used():
@@ -180,9 +204,14 @@ def knight(unit, location, my_planet):
                 if gc.is_move_ready(unit.id) and gc.can_move(unit.id,d):
                     gc.move_robot(unit.id,d)
 
-def main():
+def things_that_need_to_be_done_each_turn():
     global team_karbonite
-    team_karbonite=gc.karbonite()
+    team_karbonite = gc.karbonite()
+    units_on_team = gc.my_units()
+    num_units = len([i for i in units_on_team if i.unit_type == bc.UnitType.Worker])
+
+def main():
+    things_that_need_to_be_done_each_turn()
     for unit in gc.my_units():
         if(unit.unit_type==bc.UnitType.Factory):
             factory(unit)
