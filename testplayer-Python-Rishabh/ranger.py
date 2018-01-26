@@ -11,7 +11,11 @@ def ranger(unit,location):
 		escaped=False
 #We need to check which of robots in range has lowest health. Attack that one.
 #We also need to move away from knights that are close.
-#We should target rockets. 
+#We should target rockets.
+		if other.unit_type==bc.UnitType.Knight and location.map_location().distance_squared_to(other.location.map_location())<=1:
+			tempDirKnight=location.map_location().direction_to(other.location.map_location()).
+	        if gc.is_move_ready(unit.id) and gc.can_move(unit.id,tempDirKnight):
+	            gc.move_robot(unit.id,tempDir)
 	    if gc.is_attack_ready(unit.id) and gc.can_attack(unit.id, other.id):
 	    	testQuot=(location.map_location().distance_squared_to(other.location.map_location())
 	    		/unit.vision_range) * (other.health/other.max_health)
@@ -30,9 +34,10 @@ def ranger(unit,location):
 		            minDistance=tempDistance
 		            minUnitDistance=other
 	if minUnitAttack is not None:
-		gc.attack(unit.id,minUnit.id)
+		gc.attack(unit.id,minUnitAttack.id)
 		attacked=True
 	elif minUnitDistance is not None:
-		tempDir=location.map_location().direction_to(minUnit.location.map_location())
+		tempDir=location.map_location().direction_to(minUnitDistance.location.map_location())
         if gc.is_move_ready(unit.id) and gc.can_move(unit.id,tempDir):
             gc.move_robot(unit.id,tempDir)
+
