@@ -37,6 +37,16 @@ my_team = gc.team()
 other_team=bc.Team.Blue
 if my_team==bc.Team.Blue:
     other_team=bc.Team.Red
+earth=gc.starting_map(bc.Planet.Earth)
+x_opp_center=0
+y_opp_center=0
+
+for un in earth.initial_units:
+    if un.team==other_team:
+        x_opp_center+=un.location.map_location().x/2
+        y_opp_center+=un.location.map_location().y/2
+x_opp_center=int(x_opp_center)
+y_opp_center=int(y_opp_center)
 
 def factory(unit):
     garrison = unit.structure_garrison()
@@ -194,11 +204,16 @@ def knight(unit, location, my_planet):
             tempDir=location.map_location().direction_to(minRocket.location.map_location())
             if gc.is_move_ready(unit.id) and gc.can_move(unit.id,tempDir):
                 gc.move_robot(unit.id,tempDir)
-        else:
+        elif gc.is_move_ready(unit.id):
+            """"
             if (not rally_loc==None):
                 direc=location.map_location().direction_to(rally_loc)
                 if gc.can_move(unit.id,direc):
                     gc.move(unit.id,direc)
+            """
+            tempDirect=location.map_location().direction_to(bc.MapLocation(bc.Planet.Earth,x_opp_center,y_opp_center))
+            if gc.can_move(unit.id,tempDirect):
+                gc.move_robot(unit.id,tempDirect)
             else:
                 d=random.choice(directions)
                 if gc.is_move_ready(unit.id) and gc.can_move(unit.id,d):
@@ -218,7 +233,7 @@ def ranger(unit,location):# This should be the final version.
 #We also need to move away from knights that are close.
 #We should target rockets.
         if other.unit_type==bc.UnitType.Knight and location.map_location().is_adjacent_to(other.location.map_location()):
-            print("fjksd")
+            #print("fjksd")
             tempDirKnight=other.location.map_location().direction_to(location.map_location())
             if gc.is_move_ready(unit.id) and gc.can_move(unit.id,tempDirKnight):
                 gc.move_robot(unit.id,tempDirKnight)
@@ -246,10 +261,14 @@ def ranger(unit,location):# This should be the final version.
         tempDir=location.map_location().direction_to(minUnitDistance.location.map_location())
         if gc.is_move_ready(unit.id) and gc.can_move(unit.id,tempDir):
             gc.move_robot(unit.id,tempDir)
-    elif gc.is_move_ready(unit.id):
-        for d in directions:
-            if gc.is_move_ready(unit.id) and gc.can_move(unit.id,d):
-                gc.move_robot(unit.id,d)
+    elif gc.is_move_ready(unit.id) and len(gc.sense_nearby_units_by_team(location.map_location(),location.map_location().distance_squared_to(bc.MapLocation(bc.Planet.Earth,x_opp_center,y_opp_center)),my_team))>0:
+        tempDirect=location.map_location().direction_to(bc.MapLocation(bc.Planet.Earth,x_opp_center,y_opp_center))
+        if gc.can_move(unit.id,tempDirect):
+            gc.move_robot(unit.id,tempDirect)
+        else:
+            for d in directions:
+                if gc.is_move_ready(unit.id) and gc.can_move(unit.id,d) :
+                    gc.move_robot(unit.id,d) 
 
 """
 def ranger(unit, location):
@@ -335,12 +354,14 @@ def ranger(unit, location):
 """
 
 def things_that_need_to_be_done_each_turn():
+    random.shuffle(directions)
     global team_karbonite
     team_karbonite = gc.karbonite()
     units_on_team = gc.my_units()
     num_units = len([i for i in units_on_team if i.unit_type == bc.UnitType.Worker])
 
 def main():
+
     #print(bc.MapLocation(bc.Planet.Earth,1,2).is_adjacent_to(bc.MapLocation(bc.Planet.Earth,2,3)))
     things_that_need_to_be_done_each_turn()
     for unit in gc.my_units():
@@ -363,6 +384,8 @@ def main():
 
         elif(unit.unit_type==bc.UnitType.Ranger):
             ranger(unit, location)
+        elif(unit.unit_type==bc.UnitType.Mage):
+            ranger(unit,location)
 
 while True:
     # We only support Python 3, which means brackets around print()
