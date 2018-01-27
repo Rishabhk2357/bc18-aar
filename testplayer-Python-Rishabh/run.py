@@ -98,7 +98,7 @@ def rocket(unit, location, my_planet):
             rocketLocation[0]=x
             rocketLocation[1]=y
             return
-    nearby=gc.sense_nearby_units_by_team(location.map_location(),1,my_team)
+    nearby=gc.sense_nearby_units_by_team(location.map_location(),2,my_team)
     if(len(nearby)!=0):
         for rob in nearby:
             if(gc.can_load(unit.id,rob.id)):
@@ -109,7 +109,8 @@ def worker(unit, location, my_planet):
     global team_karbonite
     if(my_planet==bc.Planet.Mars):
             x=random.random()
-            if x>0.6 and team_karbonite>200:
+            if x>0.6 and team_karbonite>300:
+                print("karbonite")
                 for d in directions:
                     if gc.can_replicate(unit.id,d):
                         gc.replicate(unit.id,d)
@@ -165,7 +166,7 @@ def knight(unit, location, my_planet):
     attacked=False
     for other in nearby:
         if gc.is_attack_ready(unit.id) and gc.can_attack(unit.id, other.id):
-            print('attacked a thing!')
+            print('knight attacked a thing!')
             gc.attack(unit.id, other.id)
             attacked=True
             return
@@ -203,7 +204,7 @@ def knight(unit, location, my_planet):
                 if gc.is_move_ready(unit.id) and gc.can_move(unit.id,d):
                     gc.move_robot(unit.id,d)
 #Ranger Code
-def ranger(unit,location):
+def ranger(unit,location):# This should be the final version. 
     nearby = gc.sense_nearby_units_by_team(location.map_location(),unit.vision_range,other_team);
     minDistance=0
     minUnitDistance=None
@@ -216,14 +217,15 @@ def ranger(unit,location):
 #We need to check which of robots in range has lowest health. Attack that one.
 #We also need to move away from knights that are close.
 #We should target rockets.
-        if other.unit_type==bc.UnitType.Knight and location.map_location().distance_squared_to(other.location.map_location())<=1:
-            tempDirKnight=other.map_location().direction_to(location.map_location())
+        if other.unit_type==bc.UnitType.Knight and location.map_location().is_adjacent_to(other.location.map_location()):
+            print("fjksd")
+            tempDirKnight=other.location.map_location().direction_to(location.map_location())
             if gc.is_move_ready(unit.id) and gc.can_move(unit.id,tempDirKnight):
-                gc.move_robot(unit.id,tempDir)
+                gc.move_robot(unit.id,tempDirKnight)
         if gc.is_attack_ready(unit.id) and gc.can_attack(unit.id, other.id):
             testQuot=(location.map_location().distance_squared_to(other.location.map_location())
                 /unit.vision_range) * (other.health/other.max_health)
-            if(testQuot<minAttackQuotient or minAttackQuotient is None):
+            if(minAttackQuotient is None or testQuot<minAttackQuotient ):
                 minAttackQuotient=testQuot
                 minUnitAttack=other
             attack_possible=True
@@ -244,8 +246,12 @@ def ranger(unit,location):
         tempDir=location.map_location().direction_to(minUnitDistance.location.map_location())
         if gc.is_move_ready(unit.id) and gc.can_move(unit.id,tempDir):
             gc.move_robot(unit.id,tempDir)
+    elif gc.is_move_ready(unit.id):
+        for d in directions:
+            if gc.is_move_ready(unit.id) and gc.can_move(unit.id,d):
+                gc.move_robot(unit.id,d)
 
-
+"""
 def ranger(unit, location):
     nearby = gc.sense_nearby_units_by_team(location.map_location(),unit.vision_range,other_team);
     minDistance=0
@@ -287,7 +293,7 @@ def ranger(unit, location):
         tempDir=location.map_location().direction_to(minUnitDistance.location.map_location())
         if gc.is_move_ready(unit.id) and gc.can_move(unit.id,tempDir):
             gc.move_robot(unit.id,tempDir)
-
+"""
 """
 def ranger(unit, location):
     nearby = gc.sense_nearby_units_by_team(location.map_location(),unit.vision_range,other_team);
@@ -335,6 +341,7 @@ def things_that_need_to_be_done_each_turn():
     num_units = len([i for i in units_on_team if i.unit_type == bc.UnitType.Worker])
 
 def main():
+    #print(bc.MapLocation(bc.Planet.Earth,1,2).is_adjacent_to(bc.MapLocation(bc.Planet.Earth,2,3)))
     things_that_need_to_be_done_each_turn()
     for unit in gc.my_units():
         if(unit.unit_type==bc.UnitType.Factory):
