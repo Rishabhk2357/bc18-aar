@@ -13,7 +13,7 @@ def ranger(unit,location):
 #We also need to move away from knights that are close.
 #We should target rockets.
 		if other.unit_type==bc.UnitType.Knight and location.map_location().distance_squared_to(other.location.map_location())<=1:
-			tempDirKnight=location.map_location().direction_to(other.location.map_location()).
+			tempDirKnight=other.map_location().direction_to(location.map_location())
 	        if gc.is_move_ready(unit.id) and gc.can_move(unit.id,tempDirKnight):
 	            gc.move_robot(unit.id,tempDir)
 	    if gc.is_attack_ready(unit.id) and gc.can_attack(unit.id, other.id):
