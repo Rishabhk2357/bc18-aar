@@ -55,64 +55,74 @@ def factory(unit):
         if gc.can_unload(unit.id, d):
             #print('unloaded a {}}!'.format(garrison[-1].unit_type))
             gc.unload(unit.id, d)
-            return
-    else:
-        x = random.random()
-        if x<0.3:
-            if gc.can_produce_robot(unit.id, bc.UnitType.Knight):
-                gc.produce_robot(unit.id, bc.UnitType.Knight)
-                print('produced a Knight!')
-        elif x<0.6:
-            if gc.can_produce_robot(unit.id, bc.UnitType.Ranger):
-                gc.produce_robot(unit.id, bc.UnitType.Ranger)
-                print('produced a Ranger!')
-        elif x<0.8:
-            if gc.can_produce_robot(unit.id, bc.UnitType.Worker):
-                gc.produce_robot(unit.id, bc.UnitType.Worker)
-                print('produced a Worker!')
-        elif x<0.9:
-            if gc.can_produce_robot(unit.id, bc.UnitType.Mage):
-                gc.produce_robot(unit.id, bc.UnitType.Mage)
-                print('produced a Mage!')
-        elif x<1:
-            if gc.can_produce_robot(unit.id, bc.UnitType.Healer):
-                gc.produce_robot(unit.id, bc.UnitType.Healer)
-                print('produced a Healer!')
-        return
+           
+    x = random.random()
+    if x<0.3:
+        if gc.can_produce_robot(unit.id, bc.UnitType.Knight):
+            gc.produce_robot(unit.id, bc.UnitType.Knight)
+            print('produced a Knight!')
+    elif x<0.6:
+        if gc.can_produce_robot(unit.id, bc.UnitType.Ranger):
+            gc.produce_robot(unit.id, bc.UnitType.Ranger)
+            print('produced a Ranger!')
+    elif x<0.8:
+        if gc.can_produce_robot(unit.id, bc.UnitType.Worker):
+            gc.produce_robot(unit.id, bc.UnitType.Worker)
+            print('produced a Worker!')
+    elif x<0.9:
+        if gc.can_produce_robot(unit.id, bc.UnitType.Mage):
+            gc.produce_robot(unit.id, bc.UnitType.Mage)
+            print('produced a Mage!')
+    elif x<1:
+        if gc.can_produce_robot(unit.id, bc.UnitType.Healer):
+            gc.produce_robot(unit.id, bc.UnitType.Healer)
+            print('produced a Healer!')
+    return
 
 def rocket(unit, location, my_planet):
     #Spots 0 and 1 in the array represent x and y coordinates of potential mars launch coordinates.
     if(my_planet==bc.Planet.Mars):
-        d=random.choice(directions)
-        if gc.can_unload(unit.id,d):
-            print("unloaded on mars")
-            gc.unload(unit.id,d)
-            return
+        for d in directions:
+           #d=random.choice(directions)
+            if gc.can_unload(unit.id,d):
+                print("unloaded on mars")
+                gc.unload(unit.id,d)
+                return
         return
     x=rocketLocation[0]
     y=rocketLocation[1]
     if len(unit.structure_garrison())==unit.structure_max_capacity() or (
         len(gc.sense_nearby_units_by_team(location.map_location(),2,other_team))!=0 and
-        len(unit.structure_garrison())>=1):
-        while gc.starting_map(my_planet.other()).is_passable_terrain_at(bc.MapLocation(my_planet.other(),x,y))==False:
-            x+=1
-            if(x%(gc.starting_map(my_planet.other()).width)==0):
-                x=0
+        len(unit.structure_garrison())>=1) or gc.round()>=749:
+        print("{}: {}".format(x,y))
+
+        while gc.starting_map(bc.Planet.Mars).is_passable_terrain_at(bc.MapLocation(bc.Planet.Mars,x,y))==False:
+            x+=2
+            if(x>=(gc.starting_map(bc.Planet.Mars).width)):
+                x=x%(gc.starting_map(bc.Planet.Mars).width)
                 y+=1
-        if gc.can_launch_rocket(unit.id, bc.MapLocation(my_planet.other(), x,y)):
-            gc.launch_rocket(unit.id, bc.MapLocation(my_planet.other(), x,y))
-            x+=1
-            if(x%(gc.starting_map(my_planet.other()).width)==0):
-                x=0
+        if gc.can_launch_rocket(unit.id, bc.MapLocation(bc.Planet.Mars, x,y)):
+            gc.launch_rocket(unit.id, bc.MapLocation(bc.Planet.Mars, x,y))
+            x+=2
+            if(x>=(gc.starting_map(bc.Planet.Mars).width)):
+                x=x%(gc.starting_map(bc.Planet.Mars).width)
                 y+=1
             rocketLocation[0]=x
             rocketLocation[1]=y
             return
     nearby=gc.sense_nearby_units_by_team(location.map_location(),2,my_team)
+    d={}
+    for un in unit.structure_garrison():
+        typ=gc.unit(un).unit_type
+        if typ in d.keys():
+            d[typ]+=1
+        else:
+            d[typ]=1
     if(len(nearby)!=0):
         for rob in nearby:
-            if(gc.can_load(unit.id,rob.id)):
-                gc.load(unit.id,rob.id)
+            if (bc.UnitType.Worker not in d or not rob.unit_type==bc.UnitType.Worker):
+                if(gc.can_load(unit.id,rob.id)):
+                    gc.load(unit.id,rob.id)
     return
 
 def worker(unit, location, my_planet):
@@ -150,24 +160,29 @@ def worker(unit, location, my_planet):
     n=random.randint(0,1)
 
     # or, try to build a factory:
+
     if(n>0.5):
         if len(gc.sense_nearby_units_by_team(location.map_location(),30,other_team))==0 and gc.can_blueprint(unit.id,bc.UnitType.Rocket,d) and gc.karbonite()>bc.UnitType.Rocket.blueprint_cost():
             gc.blueprint(unit.id,bc.UnitType.Rocket,d)
-        elif gc.is_move_ready(unit.id) and gc.can_move(unit.id, d):
-            gc.move_robot(unit.id, d)
+        else:
+            for direc in directions:
+                if gc.can_harvest(unit.id,direc):
+                    gc.harvest(unit.id,direc)
+                    return
+            if gc.is_move_ready(unit.id) and gc.can_move(unit.id, d):
+                gc.move_robot(unit.id, d)
     else:
         if gc.karbonite() > bc.UnitType.Factory.blueprint_cost() and gc.can_blueprint(unit.id, bc.UnitType.Factory, d):
             gc.blueprint(unit.id, bc.UnitType.Factory, d)
-        elif gc.is_move_ready(unit.id) and gc.can_move(unit.id, d):
-            gc.move_robot(unit.id, d)
-
-        if(unit.unit_type==bc.UnitType.Knight):
-            nearby = gc.sense_nearby_units_by_team(location.map_location(), 70, other_team);
-            for other in nearby:
-                if gc.is_attack_ready(unit.id) and gc.can_attack(unit.id, other.id):
-                    print('attacked a thing!')
-                    gc.attack(unit.id, other.id)
+        else:
+            for direc in directions:
+                if gc.can_harvest(unit.id,direc):
+                    gc.harvest(unit.id,direc)
                     return
+            if gc.is_move_ready(unit.id) and gc.can_move(unit.id, d):
+                gc.move_robot(unit.id, d)
+
+       
 
 def knight(unit, location, my_planet):
     nearby = gc.sense_nearby_units_by_team(location.map_location(),30,other_team);
@@ -211,14 +226,24 @@ def knight(unit, location, my_planet):
                 if gc.can_move(unit.id,direc):
                     gc.move(unit.id,direc)
             """
-            tempDirect=location.map_location().direction_to(bc.MapLocation(bc.Planet.Earth,x_opp_center,y_opp_center))
-            if gc.can_move(unit.id,tempDirect):
-                gc.move_robot(unit.id,tempDirect)
-            else:
+            rally=False
+            if my_planet==bc.Planet.Earth and gc.round()>150:
+                tempDirect=location.map_location().direction_to(bc.MapLocation(bc.Planet.Earth,x_opp_center,y_opp_center))
+                if gc.can_move(unit.id,tempDirect):
+                    gc.move_robot(unit.id,tempDirect)
+                    rally=True
+            if not rally:
                 d=random.choice(directions)
                 if gc.is_move_ready(unit.id) and gc.can_move(unit.id,d):
                     gc.move_robot(unit.id,d)
+
 #Ranger Code
+def ranger_dot(rang, our_knight, their_unit):
+    res=0 
+    res+=((their_unit.x-rang.x)*(our_knight.x-rang.x))
+    res+=((their_unit.y-rang.y)*(our_knight.y-rang.y))
+    return res
+    
 def ranger(unit,location):# This should be the final version. 
     nearby = gc.sense_nearby_units_by_team(location.map_location(),unit.vision_range,other_team);
     minDistance=0
@@ -227,11 +252,14 @@ def ranger(unit,location):# This should be the final version.
     minAttackQuotient=None
     attacked=False
     attack_possible=False
+    minFriendlyDistance=0
+    minFriendlyUnit=None
     for other in nearby:
-        escaped=False
+        
 #We need to check which of robots in range has lowest health. Attack that one.
 #We also need to move away from knights that are close.
 #We should target rockets.
+        
         if other.unit_type==bc.UnitType.Knight and location.map_location().is_adjacent_to(other.location.map_location()):
             #print("fjksd")
             tempDirKnight=other.location.map_location().direction_to(location.map_location())
@@ -254,21 +282,48 @@ def ranger(unit,location):# This should be the final version.
                 if tempDistance<minDistance or minDistance==0:
                     minDistance=tempDistance
                     minUnitDistance=other
+
     if minUnitAttack is not None:
         gc.attack(unit.id,minUnitAttack.id)
         attacked=True
     elif minUnitDistance is not None:
         tempDir=location.map_location().direction_to(minUnitDistance.location.map_location())
-        if gc.is_move_ready(unit.id) and gc.can_move(unit.id,tempDir):
+        nearby_friendly=gc.sense_nearby_units_by_team(location.map_location(),unit.vision_range,my_team)
+        closest=True
+        for u in nearby:
+            if minUnitDistance.location.map_location().distance_squared_to(u.location.map_location())<minDistance:
+                closest=False
+
+
+        if gc.is_move_ready(unit.id) and gc.can_move(unit.id,tempDir) and not closest:
             gc.move_robot(unit.id,tempDir)
-    elif gc.is_move_ready(unit.id) and len(gc.sense_nearby_units_by_team(location.map_location(),location.map_location().distance_squared_to(bc.MapLocation(bc.Planet.Earth,x_opp_center,y_opp_center)),my_team))>0:
-        tempDirect=location.map_location().direction_to(bc.MapLocation(bc.Planet.Earth,x_opp_center,y_opp_center))
-        if gc.can_move(unit.id,tempDirect):
-            gc.move_robot(unit.id,tempDirect)
-        else:
-            for d in directions:
-                if gc.is_move_ready(unit.id) and gc.can_move(unit.id,d) :
-                    gc.move_robot(unit.id,d) 
+
+    elif gc.is_move_ready(unit.id):
+        nearby_rockets=gc.sense_nearby_units_by_type(location.map_location(), 10, bc.UnitType.Rocket)
+        minRocket=None
+        minDistance=0
+        if location.map_location().planet==bc.Planet.Earth:
+            for rocket in nearby_rockets:
+                tempDist=location.map_location().distance_squared_to(rocket.location.map_location())
+                if rocket.team==my_team and (tempDist<minDistance or minDistance==0) and len(rocket.structure_garrison())<8 and not rocket.rocket_is_used():
+                    minRocket=rocket
+                    minDistance=tempDist
+        if minRocket is not None:
+            tempDir=location.map_location().direction_to(minRocket.location.map_location())
+            if gc.is_move_ready(unit.id) and gc.can_move(unit.id,tempDir):
+                gc.move_robot(unit.id,tempDir)
+        elif len(gc.sense_nearby_units_by_team(location.map_location(),location.map_location().distance_squared_to(bc.MapLocation(bc.Planet.Earth,x_opp_center,y_opp_center)),my_team))>0:
+            rally=False
+            if location.map_location().planet==bc.Planet.Earth and gc.round()>150:
+                tempDirect=location.map_location().direction_to(bc.MapLocation(bc.Planet.Earth,x_opp_center,y_opp_center))
+                if gc.can_move(unit.id,tempDirect):
+                    gc.move_robot(unit.id,tempDirect)
+                    rally=True
+            if rally is not True:
+                for d in directions:
+                    if gc.is_move_ready(unit.id) and gc.can_move(unit.id,d) :
+                        gc.move_robot(unit.id,d) 
+                        break
 
 """
 def ranger(unit, location):
