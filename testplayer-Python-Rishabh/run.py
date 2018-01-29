@@ -92,7 +92,7 @@ def rocket(unit, location, my_planet):
     x=rocketLocation[0]
     y=rocketLocation[1]
     if len(unit.structure_garrison())==unit.structure_max_capacity() or (
-        len(gc.sense_nearby_units_by_team(location.map_location(),2,other_team))!=0 and
+        len(gc.sense_nearby_units_by_team(location.map_location(),50,other_team))!=0 and
         len(unit.structure_garrison())>=1) or gc.round()>=749:
         print("{}: {}".format(x,y))
 
