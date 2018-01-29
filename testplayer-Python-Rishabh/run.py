@@ -55,28 +55,24 @@ def factory(unit):
         if gc.can_unload(unit.id, d):
             #print('unloaded a {}}!'.format(garrison[-1].unit_type))
             gc.unload(unit.id, d)
-           
+
     x = random.random()
     if x<0.3:
         if gc.can_produce_robot(unit.id, bc.UnitType.Knight):
             gc.produce_robot(unit.id, bc.UnitType.Knight)
             print('produced a Knight!')
-    elif x<0.6:
+    elif x<0.7:
         if gc.can_produce_robot(unit.id, bc.UnitType.Ranger):
             gc.produce_robot(unit.id, bc.UnitType.Ranger)
             print('produced a Ranger!')
-    elif x<0.8:
+    elif x<0.9:
         if gc.can_produce_robot(unit.id, bc.UnitType.Worker):
             gc.produce_robot(unit.id, bc.UnitType.Worker)
             print('produced a Worker!')
-    elif x<0.9:
+    elif x<1:
         if gc.can_produce_robot(unit.id, bc.UnitType.Mage):
             gc.produce_robot(unit.id, bc.UnitType.Mage)
             print('produced a Mage!')
-    elif x<1:
-        if gc.can_produce_robot(unit.id, bc.UnitType.Healer):
-            gc.produce_robot(unit.id, bc.UnitType.Healer)
-            print('produced a Healer!')
     return
 
 def rocket(unit, location, my_planet):
