@@ -129,7 +129,7 @@ def worker(unit, location, my_planet):
     global team_karbonite
     if(my_planet==bc.Planet.Mars):
             x=random.random()
-            if x>0.6 and team_karbonite>300:
+            if (x>0.6 and team_karbonite>300) or gc.round()>=900:
                 print("karbonite")
                 for d in directions:
                     if gc.can_replicate(unit.id,d):
@@ -143,18 +143,22 @@ def worker(unit, location, my_planet):
             direc=random.choice(directions)
             if gc.is_move_ready(unit.id) and gc.can_move(unit.id, direc):
                 gc.move_robot(unit.id, direc)
-    if location.is_on_map() and not location.is_in_garrison():
-        nearby = gc.sense_nearby_units(location.map_location(), 2)
-        for other in nearby:
-            if gc.can_build(unit.id, other.id):
-                gc.build(unit.id, other.id)
-                #print('built a factory!')
-                return
+    
+    d = random.choice(directions)
+
+    nearby = gc.sense_nearby_units(location.map_location(), 2)
+    for other in nearby:
+        if gc.can_build(unit.id, other.id):
+            gc.build(unit.id, other.id)
+            #print('built a factory!')
+            if gc.can_replicate(unit.id,d):
+                gc.replicate(unit.id,d)
+            return
     # okay, there weren't any dudes around
     # pick a random direction:
-    d = random.choice(directions)
+    
     x=random.random()
-    if x>0.99:
+    if x>0.99 or (gc.round()<15 and location.map_location().distance_squared_to(bc.MapLocation(my_planet,x_opp_center,y_opp_center))>30):
         if gc.can_replicate(unit.id,d):
             gc.replicate(unit.id,d)
     n=random.randint(0,1)
